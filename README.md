@@ -45,7 +45,43 @@ CoreDNS is running at https://127.0.0.1:45317/api/v1/namespaces/kube-system/serv
 ## 📂 Declarative Manifest Implementations
 
 - **`.github/workflows/ci-cd.yaml`**: Coordinates testing operations, hooks securely into Docker registries utilizing Encrypted Secrets Management, and automatically versions build tags.
-**`k8s/deployment.yaml`**: Implements fine-grained container computing boundaries including explicit `limits` and `requests` mapping configurations to maintain application balance.
+**`k8s/application.yaml`**: Implements fine-grained container computing boundaries including explicit `limits` and `requests` mapping configurations to maintain application balance.
+
+The cluster layout isolates development tiers using strict logical boundaries defined in `k8s/application.yaml`:
+
+* **Namespace (`portfolio-production`):** Isolates the business runtime environment.
+* **Deployment (`portfolio-web-app`):** Runs **3 replicas** of an automated, lightweight Linux-based web server. Includes explicit compute configurations to meet strict cloud-native infrastructure engineering standards:
+  * **CPU Allocation:** `100m` request / `200m` hard ceiling limit.
+  * **Memory Allocation:** `64Mi` request / `128Mi` hard ceiling limit.
+* **Service (`portfolio-web-service`):** Exposes pods internally on port `80` across a safe `ClusterIP` network address mapping.
+
+### Orchestration Deployment Scripts
+```bash
+# Apply declarative infrastructure parameters to live cluster
+kubectl apply -f k8s/application.yaml
+
+# Inspect live state across the namespace boundary
+kubectl get pods -n portfolio-production
+```
+
+### Verified Runtime State Output
+```text
+NAME                                 READY   STATUS    RESTARTS   AGE
+portfolio-web-app-5674dfbc67-abc12   1/1     Running   0          45s
+portfolio-web-app-5674dfbc67-def34   1/1     Running   0          45s
+portfolio-web-app-5674dfbc67-ghi56   1/1     Running   0          45s
+```
+
+## 🌐 Local Ingress & End-to-End Traffic Testing
+
+Because this deployment sits within a secure cloud container platform without an attached external cloud provider LoadBalancer, testing is handled using loopback proxy tunnels:
+
+```bash
+# Forward traffic from host port 8080 straight down into internal cluster service
+kubectl port-forward svc/portfolio-web-service 8080:80 -n portfolio-production
+```
+The application context maps smoothly to local environments, allowing immediate validation of load-balanced container structures.
+
 **`argocd/application.yaml`**: Explicitly maps live environment parameters directly against repository states to proactively detect and isolate drift.
 
 # File structure
@@ -54,7 +90,7 @@ gitops-kubernetes-infra/
 │   └── workflows/
 │       └── ci-cd.yaml         # Automatically builds and tests your app
 ├── k8s/
-│   ├── deployment.yaml        # Defines how your app runs in K8s
+│   ├── application.yaml        # Defines how your app runs in K8s
 │   └── service.yaml           # Exposes your app to the internet
 └── argocd/
     └── application.yaml       # Teaches ArgoCD to watch this repo

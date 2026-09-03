@@ -1,0 +1,49 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-and-lint:
+    name: Validate Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Kubeconform
+        uses: x509jason/kubeconform-action@v1
+        with:
+          kubeconform_version: v0.6.3
+
+      - name: Run Kubernetes Manifest Validation
+        run: |
+          echo "==== Starting Structural Manifest Validation ===="
+          kubeconform -strict -summary k8s/application.yaml
+
+  build-and-push:
+    name: Build & Register Image
+    needs: validate-and-lint # Blocks image generation if validation fails
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/portfolio-app:${{ github.sha }}

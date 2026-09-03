@@ -14,19 +14,21 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v5
 
-      - name: Install Kubeconform Natively via Go
+      - name: Install Kubeconform Natively via Curl
         run: |
-          echo "==== Compiling Kubeconform Tooling Automatically ===="
-          go install ://github.com
+          echo "==== Downloading Working Kubeconform Binary ===="
+          curl -L https://github.com -o kubeconform.tar.gz
+          tar -xzf kubeconform.tar.gz
+          sudo mv kubeconform /usr/local/bin/
 
       - name: Run Kubernetes Manifest Validation
         run: |
           echo "==== Starting Structural Manifest Validation ===="
-          $(go env GOPATH)/bin/kubeconform -strict -summary k8s/application.yaml
+          kubeconform -strict -summary k8s/application.yaml
 
   build-and-push:
     name: Build & Register Image
-    needs: validate-and-lint # Blocks build step if structural linting fails
+    needs: validate-and-lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code

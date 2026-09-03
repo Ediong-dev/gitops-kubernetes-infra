@@ -1,0 +1,95 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: portfolio-production
+  labels:
+    tier: production
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-html-config
+  namespace: portfolio-production
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Ediong-dev DevOps Portfolio</title>
+        <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+            .card { background-color: #1e293b; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); border: 1px solid #334155; text-align: center; max-width: 500px; }
+            h1 { color: #38bdf8; margin-bottom: 0.5rem; font-size: 2rem; }
+            .badge { background-color: #0284c7; color: white; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: bold; display: inline-block; margin-bottom: 1.5rem; }
+            p { color: #94a3b8; line-height: 1.6; }
+            .status { margin-top: 1.5rem; font-size: 0.9rem; color: #4ade80; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+            .pulse { width: 10px; height: 10px; background-color: #4ade80; border-radius: 50%; box-shadow: 0 0 0 0 rgba(74,222,128,0.7); animation: pulse 1.5s infinite; }
+            @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74,222,128,0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(74,222,128,0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74,222,128,0); } }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <h1>Edionsenyene's Portfolio</h1>
+            <div class="badge">KCNA Certified Engineer</div>
+            <p>This deployment verifies native cloud-native infrastructure automation using <strong>Kind</strong>, <strong>Docker</strong>, and <strong>Kubernetes</strong> entirely inside a non-privileged GitHub Codespace container layer.</p>
+            <div class="status"><span class="pulse"></span> Pod Replicas Load Balanced & Healthy</div>
+        </div>
+    </body>
+    </html>
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-web-app
+  namespace: portfolio-production
+  labels:
+    app: portfolio-web
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: portfolio-web
+  template:
+    metadata:
+      labels:
+        app: portfolio-web
+    spec:
+      containers:
+      - name: web-server
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        volumeMounts: # Instructs Nginx to pull its web file from our volume definition below
+        - name: html-volume
+          mountPath: /usr/share/nginx/html
+      volumes: # Links our defined ConfigMap data directly into the pod ecosystem as a raw file system volume
+      - name: html-volume
+        configMap:
+          name: web-html-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portfolio-web-service
+  namespace: portfolio-production
+spec:
+  type: ClusterIP
+  selector:
+    app: portfolio-web
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80

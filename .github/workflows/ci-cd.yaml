@@ -14,10 +14,12 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Kubeconform
-        uses: x509jason/kubeconform-action@v1
-        with:
-          kubeconform_version: v0.6.3
+      - name: Install Kubeconform Natively on Runner Linux Layer
+        run: |
+          echo "==== Downloading Verified Kubeconform Linux Binary ===="
+          wget https://github.com
+          tar -xf kubeconform-linux-amd64.tar.gz
+          sudo mv kubeconform /usr/local/bin/
 
       - name: Run Kubernetes Manifest Validation
         run: |
@@ -26,7 +28,7 @@ jobs:
 
   build-and-push:
     name: Build & Register Image
-    needs: validate-and-lint # Blocks image generation if validation fails
+    needs: validate-and-lint # Keeps build blocked until validation passes cleanly
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code

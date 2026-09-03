@@ -33,7 +33,7 @@ data:
     </head>
     <body>
         <div class="card">
-            <h1>Edionsenyene's Portfolio</h1>
+            <h1>Edionsenyene's Sample Portfolio</h1>
             <div class="badge">KCNA Certified Engineer</div>
             <p>This deployment verifies native cloud-native infrastructure automation using <strong>Kind</strong>, <strong>Docker</strong>, and <strong>Kubernetes</strong> entirely inside a non-privileged GitHub Codespace container layer.</p>
             <div class="status"><span class="pulse"></span> Pod Replicas Load Balanced & Healthy</div>

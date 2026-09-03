@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5 # Upgraded to resolve Node execution deprecation warnings
 
       - name: Install Kubeconform Natively on Runner Linux Layer
         run: |
@@ -28,11 +28,11 @@ jobs:
 
   build-and-push:
     name: Build & Register Image
-    needs: validate-and-lint # Keeps build blocked until validation passes cleanly
+    needs: validate-and-lint # Blocks assembly task routes if structural lint steps fail
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5 # Upgraded to align runtime platforms cleanly
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

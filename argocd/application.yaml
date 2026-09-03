@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: production-gitops-sync
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/Ediong-dev/gitops-kubernetes-infra'
+    targetRevision: main
+    path: k8s
+  destination:
+    server: 'https://kubernetes.default.svc' # Connects to target K8s cluster
+    namespace: production
+  syncPolicy:
+    automated:
+      prune: true     # Automatically deletes old resources
+      selfHeal: true  # Corrects manual changes automatically

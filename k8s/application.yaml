@@ -43,7 +43,7 @@ data:
 
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: DeployMMMment
 metadata:
   name: portfolio-web-app
   namespace: portfolio-production

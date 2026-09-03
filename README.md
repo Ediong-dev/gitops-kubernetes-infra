@@ -5,11 +5,45 @@
 
 An automated, cloud-native infrastructure showcase demonstrating declarative GitOps workflows, automated application packaging, and localized multi-node container orchestration within resource-constrained server environments.
 
+---
+
 ## 🏗️ Architectural Overview
 
 This project bypasses traditional host-level administrative constraints by deploying an entire staging lifecycle inside a cloud-managed Linux runtime environment utilizing an ephemeral virtualization topology.
 
-[ Developer Commit ]│▼┌───────────────────┐│  GitHub Actions   │ ───► [ Automated Lint, Build, & Image Assembly ]└───────────────────┘│▼┌───────────────────┐│    Docker Hub     │ ───► [ Secure Image Registry Storage ]└───────────────────┘│▼┌───────────────────┐│ ArgoCD Engine Sync│ ───► [ Matches Code State with Live State ]└───────────────────┘│▼┌────────────────────────────────────────────────────────┐│             GitHub Codespace Linux Sandbox             ││                                                        ││   ┌────────────────────────────────────────────────┐   ││   │        Kind (Kubernetes-in-Docker) Node        │   ││   │                                                │   ││   │  ┌────────────────┐        ┌────────────────┐  │   ││   │  │  CoreDNS Pod   │        │ Portfolio Pods │  │   ││   │  └────────────────┘        └────────────────┘  │   ││   └────────────────────────────────────────────────┘   │└────────────────────────────────────────────────────────┘
+```text
+       [ Developer Commit ]
+               │
+               ▼
+     ┌───────────────────┐
+     │  GitHub Actions   │ ───► [ Automated Lint, Build, & Image Assembly ]
+     └───────────────────┘
+               │
+               ▼
+     ┌───────────────────┐
+     │    Docker Hub     │ ───► [ Secure Image Registry Storage ]
+     └───────────────────┘
+               │
+               ▼
+     ┌───────────────────┐
+     │ ArgoCD Engine Sync│ ───► [ Matches Code State with Live State ]
+     └───────────────────┘
+               │
+               ▼
+┌────────────────────────────────────────────────────────┐
+│             GitHub Codespace Linux Sandbox             │
+│                                                        │
+│   ┌────────────────────────────────────────────────┐   │
+│   │        Kind (Kubernetes-in-Docker) Node        │   │
+│   │                                                │   │
+│   │  ┌────────────────┐        ┌────────────────┐  │   │
+│   │  │  CoreDNS Pod   │        │ 3x Web App Pods│  │   │
+│   │  └────────────────┘        └────────────────┘  │   │
+│   └────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────┘
+```
+
+---
 
 ## 🛠️ Technology Stack & Core Competencies
 
@@ -18,6 +52,8 @@ This project bypasses traditional host-level administrative constraints by deplo
 - **Automation Pipeline:** GitHub Actions runner executing conditional step flows
 - **Containerization Engine:** Docker container layer assembly & volume optimization
 - **Base OS Layer:** Ubuntu Linux terminal execution environment
+
+---
 
 ## 🔧 Infrastructure Provisioning & Bootstrapping
 
@@ -44,8 +80,9 @@ CoreDNS is running at https://127.0.0.1:45317/api/v1/namespaces/kube-system/serv
 
 ## 📂 Declarative Manifest Implementations
 
-- **`.github/workflows/ci-cd.yaml`**: Coordinates testing operations, hooks securely into Docker registries utilizing Encrypted Secrets Management, and automatically versions build tags.
-**`k8s/application.yaml`**: Implements fine-grained container computing boundaries including explicit `limits` and `requests` mapping configurations to maintain application balance.
+* **`.github/workflows/ci-cd.yaml`**: Coordinates testing operations, hooks securely into Docker registries utilizing Encrypted Secrets Management, and automatically versions build tags.
+* **`k8s/application.yaml`**: Implements fine-grained container computing boundaries including explicit `limits` and `requests` mapping configurations to maintain application balance.
+* **`argocd-app.yaml`**: Explicitly maps live environment parameters directly against repository states to proactively detect and isolate drift.
 
 The cluster layout isolates development tiers using strict logical boundaries defined in `k8s/application.yaml`:
 
@@ -72,6 +109,8 @@ portfolio-web-app-5674dfbc67-def34   1/1     Running   0          45s
 portfolio-web-app-5674dfbc67-ghi56   1/1     Running   0          45s
 ```
 
+---
+
 ## 🌐 Local Ingress & End-to-End Traffic Testing
 
 Because this deployment sits within a secure cloud container platform without an attached external cloud provider LoadBalancer, testing is handled using loopback proxy tunnels:
@@ -82,7 +121,7 @@ kubectl port-forward svc/portfolio-web-service 8080:80 -n portfolio-production
 ```
 The application context maps smoothly to local environments, allowing immediate validation of load-balanced container structures.
 
-**`argocd/application.yaml`**: Explicitly maps live environment parameters directly against repository states to proactively detect and isolate drift.
+---
 
 ## 🛡️ Continuous Integration & Shift-Left Validation
 

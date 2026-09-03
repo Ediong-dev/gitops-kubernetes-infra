@@ -11,7 +11,7 @@ spec:
     path: k8s
   destination:
     server: 'https://kubernetes.default.svc' # Connects to target K8s cluster
-    namespace: production
+    namespace: portfolio-production
   syncPolicy:
     automated:
       prune: true     # Automatically deletes old resources

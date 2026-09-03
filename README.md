@@ -84,13 +84,12 @@ The application context maps smoothly to local environments, allowing immediate 
 
 **`argocd/application.yaml`**: Explicitly maps live environment parameters directly against repository states to proactively detect and isolate drift.
 
-# File structure
-gitops-kubernetes-infra/
-├── .github/
-│   └── workflows/
-│       └── ci-cd.yaml         # Automatically builds and tests your app
-├── k8s/
-│   ├── application.yaml        # Defines how your app runs in K8s
-│   └── service.yaml           # Exposes your app to the internet
-└── argocd/
-    └── application.yaml       # Teaches ArgoCD to watch this repo
+## 🛡️ Continuous Integration & Shift-Left Validation
+
+To guarantee structural health before running cluster deployments, the pipeline incorporates **Kubeconform** linting to intercept bad schema variables at the source control boundary.
+
+```text
+==== Starting Structural Manifest Validation ====
+Summary: 3 resources found valid, 0 resources found invalid, 0 errors
+```
+The workflow engine mandates that all configurations pass strict schema checks before unlocking container assembly tasks.

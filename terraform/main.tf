@@ -1,121 +1,128 @@
-# 1. Provider configuration
 provider "aws" {
   region = var.aws_region
 }
 
-# 2. Data sources for required IAM roles (These need to exist in your AWS account)
-#    In production, you would create these roles, but we use data sources to keep it clean.
-data "aws_iam_role" "eks_cluster_role" {
-  name = "EKSClusterRole" # Pre-created role for EKS control plane
+# 1. Get the latest Ubuntu 22.04 LTS AMI
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"]
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
 }
 
-data "aws_iam_role" "eks_node_group_role" {
-  name = "EKSNodeGroupRole" # Pre-created role for worker nodes
-}
-
-# 3. Networking: VPC and Subnets
+# 2. Networking
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support   = true
-
-  tags = {
-    Name                                        = "portfolio-vpc"
-    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
-  }
+  tags = { Name = "portfolio-vpc" }
 }
 
-# Public subnets (2 for high availability)
-resource "aws_subnet" "public" {
-  count = 2
-
+resource "aws_subnet" "main" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = cidrsubnet(aws_vpc.main.cidr_block, 8, count.index)
-  availability_zone       = data.aws_availability_zones.available.names[count.index]
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = data.aws_availability_zones.available.names[0]
   map_public_ip_on_launch = true
-
-  tags = {
-    Name                                        = "portfolio-subnet-${count.index}"
-    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
-    "kubernetes.io/role/elb"                    = "1"
-  }
+  tags = { Name = "portfolio-subnet" }
 }
 
-# Internet Gateway (allows internet access)
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
-  tags = {
-    Name = "portfolio-igw"
-  }
+  tags   = { Name = "portfolio-igw" }
 }
 
-# Route table for public subnets
-resource "aws_route_table" "public" {
+resource "aws_route_table" "main" {
   vpc_id = aws_vpc.main.id
-
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.main.id
   }
+  tags = { Name = "portfolio-rt" }
+}
 
-  tags = {
-    Name = "portfolio-route-table"
+resource "aws_route_table_association" "main" {
+  subnet_id      = aws_subnet.main.id
+  route_table_id = aws_route_table.main.id
+}
+
+# 3. Security Group
+resource "aws_security_group" "k3s" {
+  name        = "k3s-sg"
+  description = "Allow K3s traffic"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 6443
+    to_port     = 6443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 30000
+    to_port     = 32767
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = { Name = "k3s-sg" }
+}
+
+# 4. EC2 Instance (Free Tier)
+resource "aws_instance" "k3s_server" {
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.main.id
+  vpc_security_group_ids = [aws_security_group.k3s.id]
+  key_name               = var.key_name
+
+  user_data = <<-EOF
+    #!/bin/bash
+    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server --bind-address 0.0.0.0 --tls-san $(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)" sh -
+    sleep 30
+    sudo cp /etc/rancher/k3s/k3s.yaml /tmp/kubeconfig
+    sudo chmod 644 /tmp/kubeconfig
+    PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+    sed -i "s/127.0.0.1/$PUBLIC_IP/g" /tmp/kubeconfig
+  EOF
+
+  tags = { Name = "k3s-server" }
+}
+
+# 5. Fetch kubeconfig
+resource "null_resource" "fetch_kubeconfig" {
+  depends_on = [aws_instance.k3s_server]
+
+  provisioner "file" {
+    source      = "/tmp/kubeconfig"
+    destination = "${path.module}/../kubeconfig"
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = file(var.private_key_path)
+      host        = aws_instance.k3s_server.public_ip
+    }
   }
 }
 
-# Associate route table with subnets
-resource "aws_route_table_association" "public" {
-  count = 2
-
-  subnet_id      = aws_subnet.public[count.index].id
-  route_table_id = aws_route_table.public.id
-}
-
-# Get availability zones for the region
 data "aws_availability_zones" "available" {
   state = "available"
-}
-
-# 4. EKS Cluster (Kubernetes control plane)
-resource "aws_eks_cluster" "portfolio" {
-  name     = var.cluster_name
-  role_arn = data.aws_iam_role.eks_cluster_role.arn
-  version  = "1.30"
-
-  vpc_config {
-    subnet_ids = aws_subnet.public[*].id
-  }
-
-  tags = {
-    Name = "portfolio-eks"
-  }
-
-  depends_on = [
-    aws_route_table_association.public,
-    aws_internet_gateway.main
-  ]
-}
-
-# 5. EKS Node Group (worker nodes)
-resource "aws_eks_node_group" "portfolio" {
-  cluster_name    = aws_eks_cluster.portfolio.name
-  node_group_name = "portfolio-workers"
-  node_role_arn   = data.aws_iam_role.eks_node_group_role.arn
-  subnet_ids      = aws_subnet.public[*].id
-
-  scaling_config {
-    desired_size = var.desired_node_count
-    max_size     = 5
-    min_size     = 2
-  }
-
-  instance_types = [var.node_instance_type]
-
-  tags = {
-    Name = "portfolio-node-group"
-  }
-
-  depends_on = [
-    aws_eks_cluster.portfolio
-  ]
 }

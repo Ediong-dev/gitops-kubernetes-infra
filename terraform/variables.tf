@@ -1,23 +1,23 @@
 variable "aws_region" {
-  description = "AWS region where resources will be created"
+  description = "AWS region"
   type        = string
   default     = "us-east-1"
 }
 
-variable "cluster_name" {
-  description = "Name of the EKS cluster"
+variable "instance_type" {
+  description = "EC2 instance type (free tier eligible)"
   type        = string
-  default     = "portfolio-cluster"
+  default     = "t3.micro"
 }
 
-variable "node_instance_type" {
-  description = "EC2 instance type for worker nodes"
+variable "key_name" {
+  description = "Name of the EC2 Key Pair in AWS"
   type        = string
-  default     = "t3.medium"
+  default     = "portfolio-key"
 }
 
-variable "desired_node_count" {
-  description = "Number of worker nodes to start with"
-  type        = number
-  default     = 3
+variable "private_key_path" {
+  description = "Path to your private key (.pem)"
+  type        = string
+  default     = "~/.ssh/portfolio-key.pem"
 }

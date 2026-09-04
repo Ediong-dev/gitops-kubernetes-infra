@@ -19,28 +19,234 @@ data:
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Ediong-dev DevOps Portfolio</title>
+        <title>Edionsenyene Udoh | SRE Portfolio</title>
         <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-            .card { background-color: #1e293b; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); border: 1px solid #334155; text-align: center; max-width: 500px; }
-            h1 { color: #38bdf8; margin-bottom: 0.5rem; font-size: 2rem; }
-            .badge { background-color: #0284c7; color: white; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: bold; display: inline-block; margin-bottom: 1.5rem; }
-            p { color: #94a3b8; line-height: 1.6; }
-            .status { margin-top: 1.5rem; font-size: 0.9rem; color: #4ade80; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
-            .pulse { width: 10px; height: 10px; background-color: #4ade80; border-radius: 50%; box-shadow: 0 0 0 0 rgba(74,222,128,0.7); animation: pulse 1.5s infinite; }
-            @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74,222,128,0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(74,222,128,0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74,222,128,0); } }
+            :root {
+                --bg-main: #0f172a;
+                --bg-card: #1e293b;
+                --border-color: #334155;
+                --accent: #38bdf8;
+                --badge-bg: #0284c7;
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --success: #4ade80;
+            }
+            
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            
+            body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                background-color: var(--bg-main); 
+                color: var(--text-main); 
+                line-height: 1.6;
+                padding: 2rem;
+                overflow-x: hidden;
+            }
+            
+            .container { max-width: 900px; margin: 0 auto; }
+            
+            /* Header & Typing Effect */
+            header { text-align: center; margin-bottom: 4rem; padding-top: 2rem; }
+            h1 { color: var(--accent); margin-bottom: 0.5rem; font-size: clamp(2rem, 5vw, 3rem); }
+            .typing-container {
+                display: inline-block;
+                font-size: clamp(1.1rem, 3vw, 1.5rem);
+                color: var(--text-main);
+                border-right: 2px solid var(--accent);
+                white-space: nowrap;
+                overflow: hidden;
+                margin-bottom: 1rem;
+                animation: blink 0.75s step-end infinite;
+            }
+            @keyframes blink { 50% { border-color: transparent; } }
+            
+            h2 { color: var(--text-main); font-size: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+            h3 { color: var(--accent); font-size: 1.2rem; margin-bottom: 0.25rem; }
+            
+            .badge { 
+                background-color: var(--badge-bg); color: white; padding: 0.35rem 0.85rem; 
+                border-radius: 9999px; font-size: 0.85rem; font-weight: 600; 
+                display: inline-block; margin: 0.25rem; 
+                transition: transform 0.2s ease, background-color 0.2s ease;
+            }
+            .badge:hover { transform: translateY(-2px); background-color: var(--accent); }
+            
+            .contact-links { margin-top: 1.5rem; }
+            .contact-links a { 
+                color: var(--accent); text-decoration: none; margin: 0 0.75rem; 
+                position: relative; transition: color 0.3s ease;
+            }
+            .contact-links a::after {
+                content: ''; position: absolute; width: 100%; transform: scaleX(0); 
+                height: 2px; bottom: -4px; left: 0; background-color: var(--accent); 
+                transform-origin: bottom right; transition: transform 0.25s ease-out;
+            }
+            .contact-links a:hover::after { transform: scaleX(1); transform-origin: bottom left; }
+            
+            /* Modern Card with Mouse Tracking Glow */
+            .section-card { 
+                background-color: var(--bg-card); padding: 2.5rem; border-radius: 12px; 
+                border: 1px solid var(--border-color); margin-bottom: 2.5rem; 
+                position: relative; overflow: hidden;
+            }
+            .section-card::before {
+                content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+                background: radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(56, 189, 248, 0.06), transparent 40%);
+                z-index: 0; opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+            }
+            .section-card:hover::before { opacity: 1; }
+            .section-card > * { position: relative; z-index: 1; }
+            
+            p { color: var(--text-muted); margin-bottom: 1rem; }
+            
+            /* Responsive Grid & Item Cards */
+            .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+            .item-card { 
+                background-color: var(--bg-main); padding: 1.5rem; border-radius: 8px; 
+                border: 1px solid var(--border-color); 
+                transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            }
+            .item-card:hover { 
+                transform: translateY(-5px); 
+                box-shadow: 0 10px 20px rgba(0,0,0,0.4); 
+                border-color: var(--accent);
+            }
+            .item-date { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem; display: block; font-family: monospace; }
+            
+            /* Scroll Reveal Animations */
+            .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.5, 0, 0, 1); }
+            .reveal.active { opacity: 1; transform: translateY(0); }
+            
+            .status { margin-top: 3rem; font-size: 0.9rem; color: var(--success); display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+            .pulse { 
+                width: 10px; height: 10px; background-color: var(--success); border-radius: 50%; 
+                box-shadow: 0 0 0 0 rgba(74,222,128,0.7); animation: pulse 1.5s infinite; 
+            }
+            @keyframes pulse { 
+                0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74,222,128,0.7); } 
+                70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(74,222,128,0); } 
+                100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74,222,128,0); } 
+            }
+
+            /* Mobile Adjustments */
+            @media (max-width: 600px) {
+                body { padding: 1rem; }
+                .section-card { padding: 1.5rem; }
+                .contact-links a { display: block; margin: 0.5rem 0; }
+            }
         </style>
     </head>
     <body>
-        <div class="card">
-            <h1>Edionsenyene's Portfolio</h1>
-            <div class="badge">KCNA Certified Engineer</div>
-            <p>This deployment verifies native cloud-native infrastructure automation using <strong>Kind</strong>, <strong>Docker</strong>, and <strong>Kubernetes</strong> entirely inside a non-privileged GitHub Codespace container layer.</p>
-            <div class="status"><span class="pulse"></span> Pod Replicas Load Balanced & Healthy</div>
+        <div class="container">
+            <header>
+                <h1>Edionsenyene Udoh</h1>
+                <div class="typing-container" id="typing-text"></div>
+                <div class="contact-links reveal">
+                    <a href="mailto:edionsenyeneudoh@gmail.com">Email</a>
+                    <a href="https://github.com/senyene" target="_blank">GitHub</a>
+                    <a href="https://linkedin.com/in/edionsenyeneudoh" target="_blank">LinkedIn</a>
+                </div>
+            </header>
+
+            <section class="section-card reveal card-glow">
+                <h2>Professional Summary</h2>
+                <p>Site Reliability Engineer with hands-on expertise in containerized infrastructure, terminal-native system administration, and dynamic infrastructure recovery across AWS and Azure cloud environments. Proven track record orchestrating Dockerized sandboxes and Kubernetes clusters for high-availability services.</p>
+                <div style="margin-top: 1.5rem;">
+                    <span class="badge">KCNA Certified</span>
+                    <span class="badge">AWS & Azure</span>
+                    <span class="badge">Kubernetes (EKS/AKS)</span>
+                    <span class="badge">Terraform</span>
+                    <span class="badge">Python & Bash</span>
+                </div>
+            </section>
+
+            <section class="section-card reveal card-glow">
+                <h2>Experience</h2>
+                <div class="grid-container">
+                    <div class="item-card">
+                        <h3>DevOps / SRE (Contract)</h3>
+                        <span class="item-date">Healthscope Project | Jan 2025 - Present</span>
+                        <p>Managed container orchestration using Kubernetes and Docker Compose, reducing deployment failures by 35%.</p>
+                    </div>
+                    <div class="item-card">
+                        <h3>SRE & Cloud Infrastructure Intern</h3>
+                        <span class="item-date">AltSchool Africa | Nov 2024 - Oct 2025</span>
+                        <p>Engineered dynamic infrastructure recovery workflows and automated infrastructure provisioning via Terraform.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section-card reveal card-glow">
+                <h2>Key Projects</h2>
+                <div class="grid-container">
+                    <div class="item-card">
+                        <h3>CI/CD Pipeline for Flask API</h3>
+                        <p>Engineered a terminal-driven CI/CD pipeline automating build, test, and deployment of a Dockerized API to AWS EC2.</p>
+                    </div>
+                    <div class="item-card">
+                        <h3>AWS Incident Tracker</h3>
+                        <p>Built a production-grade monitoring daemon that logs and correlates AWS incidents in real time via Slack APIs.</p>
+                    </div>
+                </div>
+            </section>
+
+            <div class="status reveal">
+                <span class="pulse"></span> 100% Uptime | Terminal & Cloud Native
+            </div>
         </div>
+
+        <script>
+            // 1. Dynamic Typing Effect for Header
+            const textToType = "> Site Reliability Engineer_";
+            const typingElement = document.getElementById('typing-text');
+            let i = 0;
+            
+            function typeWriter() {
+                if (i < textToType.length) {
+                    typingElement.innerHTML += textToType.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, Math.random() * 50 + 50); // Randomized typing speed
+                }
+            }
+            
+            // Start typing after a brief delay
+            setTimeout(typeWriter, 500);
+
+            // 2. Scroll Reveal using Intersection Observer
+            const revealElements = document.querySelectorAll('.reveal');
+            
+            const revealObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        observer.unobserve(entry.target); // Stop observing once revealed
+                    }
+                });
+            }, { 
+                root: null,
+                threshold: 0.15, // Trigger when 15% of the element is visible
+                rootMargin: "0px 0px -50px 0px"
+            });
+
+            revealElements.forEach(el => revealObserver.observe(el));
+
+            // 3. Mouse Tracking Glow Effect on Cards
+            const glowingCards = document.querySelectorAll('.card-glow');
+            
+            glowingCards.forEach(card => {
+                card.addEventListener('mousemove', e => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    card.style.setProperty('--mouse-x', `${x}px`);
+                    card.style.setProperty('--mouse-y', `${y}px`);
+                });
+            });
+        </script>
     </body>
     </html>
-
+    
 ---
 apiVersion: apps/v1
 kind: Deployment

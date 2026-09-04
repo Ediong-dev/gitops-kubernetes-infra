@@ -2,6 +2,8 @@
 
 ### Engineering Track Showcase | KCNA Certified
 
+[![CI/CD Pipeline Status](https://github.com/Ediong-dev/gitops-kubernetes-infra/actions/workflows/ci-cd.yaml/badge.svg)](https://github.com/Ediong-dev/gitops-kubernetes-infra/actions/workflows/ci-cd.yaml)
+
 An automated, cloud-native infrastructure showcase demonstrating declarative GitOps workflows, automated application packaging, and localized multi-node container orchestration within resource-constrained server environments.
 
 ---
@@ -40,7 +42,6 @@ This project bypasses traditional host-level administrative constraints by deplo
 │   │  └────────────────┘        └────────────────┘  │   │
 │   └────────────────────────────────────────────────┘   │
 └────────────────────────────────────────────────────────┘
-
 ```
 
 ---
@@ -68,12 +69,11 @@ $(go env GOPATH)/bin/kind create cluster --name portfolio-cluster
 
 # 3. Target cluster workspace context and query state
 kubectl cluster-info
-
 ```
 
 ### Verified Target Cluster State Output
 
-> Kubernetes control plane is running at [https://127.0.0.1:45317](https://127.0.0.1:45317)
+> Kubernetes control plane is running at [https://127.0.0.1:45317](https://127.0.0.1:45317)  
 > CoreDNS is running at [https://127.0.0.1:45317/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy](https://127.0.0.1:45317/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy)
 
 ---
@@ -88,10 +88,8 @@ The cluster layout isolates development tiers using strict logical boundaries de
 
 * **Namespace (`portfolio-production`):** Isolates the business runtime environment.
 * **Deployment (`portfolio-web-app`):** Runs **3 replicas** of an automated, lightweight Linux-based web server. Includes explicit compute configurations to meet strict cloud-native infrastructure engineering standards:
-* **CPU Allocation:** `100m` request / `200m` hard ceiling limit.
-* **Memory Allocation:** `64Mi` request / `128Mi` hard ceiling limit.
-
-
+  * **CPU Allocation:** `100m` request / `200m` hard ceiling limit.
+  * **Memory Allocation:** `64Mi` request / `128Mi` hard ceiling limit.
 * **Service (`portfolio-web-service`):** Exposes pods internally on port `80` across a safe `ClusterIP` network address mapping.
 
 ### Orchestration Deployment Scripts
@@ -102,7 +100,6 @@ kubectl apply -f k8s/application.yaml
 
 # Inspect live state across the namespace boundary
 kubectl get pods -n portfolio-production
-
 ```
 
 ### Verified Runtime State Output
@@ -112,7 +109,6 @@ NAME                                 READY   STATUS    RESTARTS   AGE
 portfolio-web-app-5674dfbc67-abc12   1/1     Running   0          45s
 portfolio-web-app-5674dfbc67-def34   1/1     Running   0          45s
 portfolio-web-app-5674dfbc67-ghi56   1/1     Running   0          45s
-
 ```
 
 ---
@@ -136,7 +132,6 @@ To successfully update the infrastructure or web content:
 git add k8s/application.yaml
 git commit -m "feat: update infrastructure state"
 git push origin main
-
 ```
 
 3. ArgoCD will automatically detect the commit, sync the new state to the cluster, and heal any drift.
@@ -144,7 +139,6 @@ git push origin main
 
 ```bash
 kubectl rollout restart deployment portfolio-web-app -n portfolio-production
-
 ```
 
 ---
@@ -158,7 +152,6 @@ If you are developing inside GitHub Codespaces, aggressive proxy caching can som
 ```bash
 # Forward traffic from host port 9999 straight down into internal cluster service
 kubectl port-forward svc/portfolio-web-service 9999:80 -n portfolio-production
-
 ```
 
 The application context maps smoothly to local environments. Navigate to `http://localhost:9999` to allow immediate validation of the load-balanced container structures.
@@ -169,8 +162,30 @@ The application context maps smoothly to local environments. Navigate to `http:/
 
 To guarantee structural health before running cluster deployments, the pipeline incorporates **Kubeconform** linting to intercept bad schema variables at the source control boundary.
 
-> ==== Starting Structural Manifest Validation ====
-> Summary: 3 resources found valid, 0 resources found invalid, 0 errors
+```text
+==== Starting Structural Manifest Validation ====
+Summary: 3 resources found valid, 0 resources found invalid, 0 errors
+```
 
 The workflow engine mandates that all configurations pass strict schema checks before unlocking container assembly tasks.
+
+---
+
+## 🛡️ Security & Shift-Left Scanning
+
+Every Docker image built by the pipeline is **automatically scanned** for **High and Critical** vulnerabilities using **Trivy**. If any are found, the build fails – preventing insecure images from being deployed. This enforces a **security‑first** culture from day one.
+
+![Trivy Scan](https://img.shields.io/badge/Trivy-Secure%20by%20Default-brightgreen?style=flat&logo=trivy)
+
+The scanning job runs **after** the image is built and pushed to Docker Hub, ensuring that only verified, secure containers reach the cluster.
+```
+
+---
+
+## ✅ What’s new
+
+- **Badge** at the top shows the live pipeline status.
+- **Trivy badge** in the new security section.
+- The **Security & Shift-Left Scanning** section clearly states your security practice.
+- Everything else is your original content, kept intact.
 

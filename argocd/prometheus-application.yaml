@@ -30,8 +30,9 @@ spec:
           service:
             type: ClusterIP
 
-          # ✅ Scrape config for kubelet (cAdvisor)
+          # ✅ Scrape config for kubelet (cAdvisor) AND kube-state-metrics
           extraScrapeConfigs: |
+            # Scrape cAdvisor (container metrics)
             - job_name: 'kubernetes-nodes-cadvisor'
               scheme: https
               tls_config:
@@ -49,6 +50,11 @@ spec:
                   regex: (.+)
                   target_label: __metrics_path__
                   replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+
+            # Scrape kube-state-metrics (cluster-level metrics)
+            - job_name: 'kube-state-metrics'
+              static_configs:
+                - targets: ['prometheus-kube-state-metrics.monitoring.svc.cluster.local:8080']
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

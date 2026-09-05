@@ -1,7 +1,21 @@
+#terraform/variables.tf
+
 variable "aws_region" {
   description = "AWS region"
   type        = string
-  default     = "us-east-1"
+  default     = "eu-north-1"
+}
+
+variable "availability_zone" {
+  description = "Availability zone for the subnet"
+  type        = string
+  default     = "eu-north-1a"
+}
+
+variable "ami_id" {
+  description = "AMI ID for Ubuntu 22.04 LTS (valid in eu-north-1)"
+  type        = string
+  default     = "ami-0339082da191e427e"   # Use this one
 }
 
 variable "instance_type" {

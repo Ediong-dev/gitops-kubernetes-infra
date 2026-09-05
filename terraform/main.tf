@@ -1,24 +1,10 @@
+#terraform/main.tf
+
 provider "aws" {
   region = var.aws_region
 }
 
-# 1. Get the latest Ubuntu 22.04 LTS AMI
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"]
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-}
-
-# 2. Networking
+# 1. Networking
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -29,7 +15,7 @@ resource "aws_vpc" "main" {
 resource "aws_subnet" "main" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
-  availability_zone       = data.aws_availability_zones.available.names[0]
+  availability_zone       = var.availability_zone   # Now a variable
   map_public_ip_on_launch = true
   tags = { Name = "portfolio-subnet" }
 }
@@ -53,7 +39,7 @@ resource "aws_route_table_association" "main" {
   route_table_id = aws_route_table.main.id
 }
 
-# 3. Security Group
+# 2. Security Group
 resource "aws_security_group" "k3s" {
   name        = "k3s-sg"
   description = "Allow K3s traffic"
@@ -86,9 +72,9 @@ resource "aws_security_group" "k3s" {
   tags = { Name = "k3s-sg" }
 }
 
-# 4. EC2 Instance (Free Tier)
+# 3. EC2 Instance (Free Tier) – using hardcoded AMI ID
 resource "aws_instance" "k3s_server" {
-  ami                    = data.aws_ami.ubuntu.id
+  ami                    = var.ami_id
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.main.id
   vpc_security_group_ids = [aws_security_group.k3s.id]
@@ -96,33 +82,57 @@ resource "aws_instance" "k3s_server" {
 
   user_data = <<-EOF
     #!/bin/bash
+    set -e
+
+    # Install K3s
     curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server --bind-address 0.0.0.0 --tls-san $(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)" sh -
-    sleep 30
+
+    # Wait for cluster to be ready
+    for i in {1..60}; do
+      if kubectl get nodes >/dev/null 2>&1; then
+        break
+      fi
+      echo "Waiting for K3s to be ready... (attempt $i)"
+      sleep 5
+    done
+
+    # Copy kubeconfig to a readable location
     sudo cp /etc/rancher/k3s/k3s.yaml /tmp/kubeconfig
     sudo chmod 644 /tmp/kubeconfig
+
+    # Replace localhost with public IP
     PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
     sed -i "s/127.0.0.1/$PUBLIC_IP/g" /tmp/kubeconfig
-  EOF
+    EOF
 
   tags = { Name = "k3s-server" }
 }
 
-# 5. Fetch kubeconfig
+# 4. Fetch kubeconfig via SSH
 resource "null_resource" "fetch_kubeconfig" {
   depends_on = [aws_instance.k3s_server]
 
-  provisioner "file" {
-    source      = "/tmp/kubeconfig"
-    destination = "${path.module}/../kubeconfig"
-    connection {
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = file(var.private_key_path)
-      host        = aws_instance.k3s_server.public_ip
-    }
+  connection {
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = file(var.private_key_path)
+    host        = aws_instance.k3s_server.public_ip
   }
-}
 
-data "aws_availability_zones" "available" {
-  state = "available"
+  provisioner "remote-exec" {
+    inline = [
+      # Wait for k3s config to exist
+      "for i in $(seq 1 30); do if sudo test -f /etc/rancher/k3s/k3s.yaml; then break; fi; echo 'Waiting for k3s...'; sleep 5; done",
+      # Get public IP
+      "PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)",
+      # Generate kubeconfig with correct IP (use | as delimiter to avoid conflict with /)
+      "sudo sed 's|127.0.0.1|'$PUBLIC_IP'|g' /etc/rancher/k3s/k3s.yaml | sudo tee /tmp/kubeconfig >/dev/null",
+      "sudo chmod 644 /tmp/kubeconfig"
+    ]
+  }
+
+  # Copy the file from remote to local using scp (local-exec runs on the Terraform host)
+  provisioner "local-exec" {
+    command = "scp -o StrictHostKeyChecking=no -i ${var.private_key_path} ubuntu@${aws_instance.k3s_server.public_ip}:/tmp/kubeconfig ${path.module}/../kubeconfig"
+  }
 }

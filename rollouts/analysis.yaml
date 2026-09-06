@@ -1,0 +1,14 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+  namespace: portfolio-production
+spec:
+  metrics:
+  - name: success-rate
+    successCondition: result[0] >= 0.9
+    failureCondition: result[0] < 0.5
+    provider:
+      web:
+        url: "http://portfolio-web-app-canary.portfolio-production.svc.cluster.local/health"
+        jsonPath: "{$.successRate}"

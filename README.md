@@ -13,38 +13,40 @@ An automated, cloud-native infrastructure showcase demonstrating declarative Git
 
 ## 🏗️ Architectural Overview
 
-This project bypasses traditional host-level administrative constraints by deploying an entire staging lifecycle inside a cloud-managed Linux runtime environment utilizing an ephemeral virtualization topology.
+This project bypasses traditional host-level administrative constraints by deploying an entire staging lifecycle inside a cloud-managed Linux runtime environment utilizing an ephemeral virtualization topology, with an optional modular deployment target for public cloud infrastructure.
 
 ```text
-       [ Developer Commit ]
-               │
-               ▼
-     ┌───────────────────┐
-     │   GitHub Actions  │ ───► [ Automated Lint, Build, & Image Assembly ]
-     └───────────────────┘
-               │
-               ▼
-     ┌───────────────────┐
-     │     Docker Hub    │ ───► [ Secure Image Registry Storage ]
-     └───────────────────┘
-               │
-               ▼
-     ┌───────────────────┐
-     │ ArgoCD Engine Sync│ ───► [ Matches Code State with Live State ]
-     └───────────────────┘
-               │
-               ▼
-┌────────────────────────────────────────────────────────┐
-│             GitHub Codespace Linux Sandbox             │
-│                                                        │
-│   ┌────────────────────────────────────────────────┐   │
-│   │         Kind (Kubernetes-in-Docker) Node       │   │
-│   │                                                │   │
-│   │  ┌────────────────┐        ┌────────────────┐  │   │
-│   │  │  CoreDNS Pod   │        │ 3x Web App Pods│  │   │
-│   │  └────────────────┘        └────────────────┘  │   │
-│   └────────────────────────────────────────────────┘   │
-└────────────────────────────────────────────────────────┘
+[ Developer Commit ]
+                       │
+                       ▼
+             ┌───────────────────┐
+             │   GitHub Actions  │ ───► [ Automated Lint, Build, & Image Assembly ]
+             └───────────────────┘
+                       │
+                       ▼
+             ┌───────────────────┐
+             │     Docker Hub    │ ───► [ Secure Image Registry Storage ]
+             └───────────────────┘
+                       │
+                       ▼
+             ┌───────────────────┐
+             │ ArgoCD Engine Sync│ ───► [ Matches Code State with Live State ]
+             └───────────────────┘
+                       │
+        ┌──────────────┴─────────────────────────────────────────┐
+        │                                                        │
+        ▼ (Primary Staging - Zero Cost)                          ▼ (Dry-Run Verified IaC)
+┌───────────────────────────────────────┐      ┌───────────────────────────────────────┐
+│     GitHub Codespace Linux Sandbox    │      │        AWS Cloud Infrastructure       │
+│                                       │      │          (Terraform Provisioned)       │
+│  ┌─────────────────────────────────┐  │      │  ┌─────────────────────────────────┐  │
+│  │  Kind (Kubernetes-in-Docker)    │  │      │  │  EC2 Instance (K3s Server)      │  │
+│  │                                 │  │      │  │                                 │  │
+│  │ ┌──────────────┐ ┌────────────┐ │  │      │  │ ┌──────────────┐ ┌────────────┐ │  │
+│  │ │ CoreDNS Pod  │ │ 3x Web Pods│ │  │      │  │ │ CoreDNS Pod  │ │ 3x Web Pods│ │  │
+│  │ └──────────────┘ └────────────┘ │  │      │  │ └──────────────┘ └────────────┘ │  │
+│  └─────────────────────────────────┘  │      │  └─────────────────────────────────┘  │
+└───────────────────────────────────────┘      └───────────────────────────────────────┘
 ```
 
 ![Screenshot Placeholder: Architecture Diagram](screenshots/architecture.png)
@@ -52,9 +54,16 @@ This project bypasses traditional host-level administrative constraints by deplo
 
 ---
 
+### 💡 Architectural & FinOps Decisions
+This project intentionally balances production-grade engineering practices with cloud cost management (FinOps):
+* **Zero-Cost Ephemeral Sandbox (Kind + Codespaces): To avoid unnecessary cloud infrastructure charges while preserving a strict Kubernetes control plane, the primary live staging environment runs inside GitHub Codespaces using a Kind (Kubernetes-in-Docker) topology. This provides a zero-friction, browser-accessible environment for reviewers without requiring cloud provider credentials. 
+* **Cloud-Ready Infrastructure-as-Code (Terraform + AWS): A fully functional, modular Terraform configuration is maintained in the /terraform directory. It provisions an AWS VPC, Subnet, Security Groups, and an EC2 instance running lightweight Kubernetes (K3s). This module is dry-run verified via terraform plan to ensure instant portability to live AWS cloud environments when production deployment is required.
+
 ## 🛠️ Technology Stack & Core Competencies
 
 * **Orchestration & Control Plane:** Kubernetes (v1.37.0 via Kind engine topology)
+* **Infrastructure as Code (IaC): Terraform (VPC, Subnets, Security Groups, EC2 automation)
+* **Cloud Provider: Amazon Web Services (AWS)
 * **GitOps Continuous Deployment:** ArgoCD declarative manifest synchronization
 * **Automation Pipeline:** GitHub Actions runner executing conditional step flows
 * **Containerization Engine:** Docker container layer assembly & volume optimization
@@ -67,6 +76,7 @@ This project bypasses traditional host-level administrative constraints by deplo
 
 ## 🔧 Infrastructure Provisioning & Bootstrapping
 
+Primary Environment (Kind Sandbox)
 To mirror this exact production environment setup inside a non-privileged system space, execute the following script directly from the terminal layer to build dependencies from source control:
 
 ```bash
@@ -79,6 +89,14 @@ $(go env GOPATH)/bin/kind create cluster --name portfolio-cluster
 # 3. Target cluster workspace context and query state
 kubectl cluster-info
 ```
+Alternative Cloud Provisioning (AWS via Terraform)
+To provision the production-ready AWS cloud infrastructure instead:
+
+```Bash
+cd terraform/
+terraform init
+terraform plan
+terraform apply
 
 ### Verified Target Cluster State Output
 

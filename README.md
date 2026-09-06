@@ -252,6 +252,7 @@ Create a `screenshots/` folder in your repository and drop your images there.
 - ✅ Prometheus + Grafana (monitoring stack)  
 - ✅ Trivy security scanning  
 - ✅ Portfolio app deployed and accessible via port‑forward  
+- ✅ Terraform AWS IaC module (dry-run verified)
 
 All of this runs inside a **Kind cluster** inside a GitHub Codespace – completely free, no cloud account needed.
 

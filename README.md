@@ -4,6 +4,9 @@
 
 [![CI/CD Pipeline Status](https://github.com/Ediong-dev/gitops-kubernetes-infra/actions/workflows/ci-cd.yaml/badge.svg)](https://github.com/Ediong-dev/gitops-kubernetes-infra/actions/workflows/ci-cd.yaml)
 
+![Screenshot Placeholder: CI/CD Pipeline Status Badge](screenshots/badge.png)
+*(Placeholder – replace with a screenshot of the badge/actions page)*
+
 An automated, cloud-native infrastructure showcase demonstrating declarative GitOps workflows, automated application packaging, and localized multi-node container orchestration within resource-constrained server environments.
 
 ---
@@ -44,6 +47,9 @@ This project bypasses traditional host-level administrative constraints by deplo
 └────────────────────────────────────────────────────────┘
 ```
 
+![Screenshot Placeholder: Architecture Diagram](screenshots/architecture.png)
+*(Placeholder – replace with your own diagram, e.g., from draw.io)*
+
 ---
 
 ## 🛠️ Technology Stack & Core Competencies
@@ -53,6 +59,9 @@ This project bypasses traditional host-level administrative constraints by deplo
 * **Automation Pipeline:** GitHub Actions runner executing conditional step flows
 * **Containerization Engine:** Docker container layer assembly & volume optimization
 * **Base OS Layer:** Ubuntu Linux terminal execution environment
+
+![Screenshot Placeholder: Technology Stack Overview](screenshots/tech-stack.png)
+*(Placeholder – optional visual summary of the stack)*
 
 ---
 
@@ -76,13 +85,16 @@ kubectl cluster-info
 > Kubernetes control plane is running at [https://127.0.0.1:45317](https://127.0.0.1:45317)  
 > CoreDNS is running at [https://127.0.0.1:45317/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy](https://127.0.0.1:45317/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy)
 
+![Screenshot Placeholder: Kind Cluster Nodes](screenshots/kind-cluster.png)
+*(Placeholder – replace with `kubectl get nodes` output)*
+
 ---
 
 ## 📂 Declarative Manifest Implementations
 
 * **`.github/workflows/ci-cd.yaml`**: Coordinates testing operations, hooks securely into Docker registries utilizing Encrypted Secrets Management, and automatically versions build tags.
 * **`k8s/application.yaml`**: Implements fine-grained container computing boundaries including explicit `limits` and `requests` mapping configurations to maintain application balance.
-* **`argocd-app.yaml`**: Explicitly maps live environment parameters directly against repository states to proactively detect and isolate drift.
+* **`argocd-application.yaml`**: Explicitly maps live environment parameters directly against repository states to proactively detect and isolate drift.
 
 The cluster layout isolates development tiers using strict logical boundaries defined in `k8s/application.yaml`:
 
@@ -110,6 +122,9 @@ portfolio-web-app-5674dfbc67-abc12   1/1     Running   0          45s
 portfolio-web-app-5674dfbc67-def34   1/1     Running   0          45s
 portfolio-web-app-5674dfbc67-ghi56   1/1     Running   0          45s
 ```
+
+![Screenshot Placeholder: Running Pods in Production Namespace](screenshots/running-pods.png)
+*(Placeholder – replace with a screenshot of `kubectl get pods -n portfolio-production`)*
 
 ---
 
@@ -141,6 +156,11 @@ git push origin main
 kubectl rollout restart deployment portfolio-web-app -n portfolio-production
 ```
 
+![Screenshot Placeholder: ArgoCD CLI Sync Status](screenshots/argocd-cli.png)
+*(Placeholder – replace with a terminal screenshot of `argocd app get production-gitops-sync` showing `Synced` and `Healthy`)*
+
+> **Note:** The ArgoCD UI is optional – the CLI provides the same sync/health information and is used by many professionals. The UI can be accessed via port‑forward, but the CLI remains the most reliable tool.
+
 ---
 
 ## 🌐 Local Ingress & End-to-End Traffic Testing
@@ -156,6 +176,9 @@ kubectl port-forward svc/portfolio-web-service 9999:80 -n portfolio-production
 
 The application context maps smoothly to local environments. Navigate to `http://localhost:9999` to allow immediate validation of the load-balanced container structures.
 
+![Screenshot Placeholder: Portfolio App in Browser](screenshots/portfolio-app.png)
+*(Placeholder – replace with a screenshot of your portfolio page loaded in a browser)*
+
 ---
 
 ## 🛡️ Continuous Integration & Shift-Left Validation
@@ -169,6 +192,9 @@ Summary: 3 resources found valid, 0 resources found invalid, 0 errors
 
 The workflow engine mandates that all configurations pass strict schema checks before unlocking container assembly tasks.
 
+![Screenshot Placeholder: Kubeconform Validation Pass](screenshots/kubeconform-pass.png)
+*(Placeholder – replace with a screenshot of the validation step passing in GitHub Actions)*
+
 ---
 
 ## 🛡️ Security & Shift-Left Scanning
@@ -178,14 +204,54 @@ Every Docker image built by the pipeline is **automatically scanned** for **High
 ![Trivy Scan](https://img.shields.io/badge/Trivy-Secure%20by%20Default-brightgreen?style=flat&logo=trivy)
 
 The scanning job runs **after** the image is built and pushed to Docker Hub, ensuring that only verified, secure containers reach the cluster.
-```
+
+![Screenshot Placeholder: Trivy Scan Passing in Actions](screenshots/trivy-pass.png)
+*(Placeholder – replace with a screenshot of the Trivy scan step succeeding)*
 
 ---
 
-## ✅ What’s new
+## 📸 Additional Screenshot Placeholders
 
-- **Badge** at the top shows the live pipeline status.
-- **Trivy badge** in the new security section.
-- The **Security & Shift-Left Scanning** section clearly states your security practice.
-- Everything else is your original content, kept intact.
+Here are more visuals you can add to make your README shine:
 
+| Placeholder File | What to Show |
+|------------------|--------------|
+| `screenshots/grafana-dashboard.png` | Grafana UI showing CPU, memory, and pod metrics |
+| `screenshots/terraform-plan.png` | Output of `terraform plan` (AWS or Oracle) |
+| `screenshots/github-actions-full.png` | Full GitHub Actions workflow run with all jobs green |
+| `screenshots/prometheus-targets.png` | Prometheus targets all UP |
+| `screenshots/argocd-ui.png` | (Optional) ArgoCD UI dashboard, if you get it working |
+
+Create a `screenshots/` folder in your repository and drop your images there.
+
+---
+
+## 📌 Summary of What Works
+
+- ✅ CI/CD pipeline (GitHub Actions → Docker Hub)  
+- ✅ Kubeconform validation  
+- ✅ ArgoCD GitOps (auto‑sync, self‑heal) – accessible via CLI  
+- ✅ Prometheus + Grafana (monitoring stack)  
+- ✅ Trivy security scanning  
+- ✅ Portfolio app deployed and accessible via port‑forward  
+
+All of this runs inside a **Kind cluster** inside a GitHub Codespace – completely free, no cloud account needed.
+
+---
+
+## 🧹 Clean Up
+
+- To stop the cluster: `kind delete cluster --name portfolio-cluster`
+- If you've provisioned any cloud resources via Terraform, run `terraform destroy` in the respective folder.
+
+---
+
+## 🤝 Contributing
+
+This is a personal portfolio project, but feedback and suggestions are welcome – feel free to open an issue or pull request.
+
+---
+
+**Built by [Ediong-dev](https://github.com/Ediong-dev)**  
+*KCNA Certified • Cloud-Native Enthusiast*
+```
